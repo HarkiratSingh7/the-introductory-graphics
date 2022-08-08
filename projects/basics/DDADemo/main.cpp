@@ -1,6 +1,3 @@
-#include <cmath>
-#include <WindowsScreen.h>
-#include <string>
 #include <Graphics.h>
 
 using namespace std;
@@ -37,7 +34,7 @@ void Draw()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow)
 {
     // One Screen only, because it's single instance
-    WindowsScreen theScreen(800, 600, string("My Application"), hInstance);
+    WindowsScreen theScreen(800, 600, LPCSTR("My Application"), hInstance);
     graphics.setScreen(&theScreen);
     theScreen.Show(iCmdShow);
     
