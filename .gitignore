@@ -1,6 +1,10 @@
 # Prerequisites
 *.d
 
+# Build and Settings Folders
+[Bb]uild/
+.vscode/
+
 # Compiled Object files
 *.slo
 *.lo
