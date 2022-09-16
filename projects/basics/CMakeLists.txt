@@ -1,2 +1,4 @@
 add_subdirectory(DDADemo)
-add_subdirectory(BresenhamDemo)
+# add_subdirectory(BresenhamDemo)
+add_subdirectory(MidPointCircleDemo)
+add_subdirectory(MidPointEllipseDemo)
