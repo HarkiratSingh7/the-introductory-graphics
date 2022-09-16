@@ -24,6 +24,76 @@ public:
         SetPixel(hdc, x, y, color);
     }
 
+
+    void midPointCircle(int xc, int yc, int r, const COLORREF &boundary)
+    {
+        int x = 0;
+        int y = r;
+        int p = 1 - r;
+        circlePointPoints(xc, yc, x, y, boundary);
+        while (x < y)
+        {
+            x++;
+            if (p < 0)
+                p += 2 * (x) + 1;
+            else
+            {
+                y--;
+                p += 2 * (x - y) + 1;
+            }
+            circlePointPoints(xc, yc, x, y, boundary);
+        }
+    }
+
+    void midPointEllipse(int xc, int yc, int rx, int ry, const COLORREF& boundary)
+    {
+        int rx2 = rx * rx;
+        int ry2 = ry * ry;
+        int _2rx2 = 2 * rx2;
+        int _2ry2 = 2 * ry2;
+        int x = 0;
+        int y = ry;
+
+        int p1 = ry2 + ROUND(rx2 * 0.25) - (ry * rx2);
+
+        ellipsePointPoints(xc, yc, x, y, boundary);
+
+        int px = 0;
+        int py = _2rx2 * y;
+
+        while (px < py)
+        {
+            px += _2ry2;
+            ++x;
+            if (p1 < 0)
+                p1 += ry2 + px;
+            else
+            {
+                y--;
+                py -= _2rx2;
+                p1 += ry2 + px - py;
+            }
+            ellipsePointPoints(xc, yc, x, y, boundary);
+        }
+
+        int p2 = (ry2 * ROUND((x + 0.5) * (x + 0.5))) + (rx2 * (y - 1) * (y - 1)) - (ry2 * rx2);
+
+        while(y > 0) 
+        {
+            y--;
+            py -= _2rx2;
+            if (p2 > 0)
+                p2 += rx2 - py;
+            else
+            {
+                x++;
+                px += _2ry2;
+                p2 += rx2 - py + px;
+            }
+            ellipsePointPoints(xc, yc, x, y, boundary);
+        }
+    }
+
     void lineDDA(int xa, int ya, int xb, int yb, const COLORREF& color)
     {
         int dx = xa - xb;
@@ -83,7 +153,26 @@ public:
             setPixel(x, y, color);
         }
     }
+private:
+    inline void ellipsePointPoints(int cx, int cy, int x, int y, const COLORREF& boundary)
+    {
+        SetPixel(hdc, cx + x, cy + y, boundary);
+        SetPixel(hdc, cx - x, cy + y, boundary);
+        SetPixel(hdc, cx + x, cy - y, boundary);
+        SetPixel(hdc, cx - x, cy - y, boundary);
+    }
 
+    inline void circlePointPoints(int cx, int cy, int x, int y, const COLORREF& boundary)
+    {
+        SetPixel(hdc, cx + x, cy + y, boundary);
+        SetPixel(hdc, cx + x, cy - y, boundary);
+        SetPixel(hdc, cx - x, cy + y, boundary);
+        SetPixel(hdc, cx - x, cy - y, boundary);
+        SetPixel(hdc, cx + y, cy + x, boundary);
+        SetPixel(hdc, cx + y, cy - x, boundary);
+        SetPixel(hdc, cx - y, cy + x, boundary);
+        SetPixel(hdc, cx - y, cy - x, boundary);
+    }
 private:
     HDC hdc{nullptr};
 };
