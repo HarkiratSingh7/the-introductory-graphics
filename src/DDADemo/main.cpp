@@ -3,6 +3,13 @@
 const int WIDTH = 800;
 const int HEIGHT = 600;
 
+/// @brief This is the digital differential analyzer algorithm (a scan-conversion algorithm).
+/// @param x1 abscissa of first point
+/// @param y1 ordinate of first point
+/// @param x2 abscissa of second point
+/// @param y2 ordinate of second point
+/// @param color color
+/// @param window the window instance to which method should apply
 void lineDDA(int x1, int y1, int x2, int y2, ColorRGB color, GraphicsWindow& window)
 {
     int dx = x2 - x1;
