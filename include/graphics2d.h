@@ -64,9 +64,13 @@ public:
         log << "OpenGL Version " << version_str << ln;
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glOrtho(0, width - 1, height - 1, 0, 0, 1);
+        glOrtho(0, width - 1, height - 1, 0, 0, 1); // Origin at the top left
     }
 
+    /// @brief plots a point
+    /// @param x abscissa
+    /// @param y ordinate
+    /// @param color color of the point
     void plotpt(int x, int y, const ColorRGB &color)
     {
         glBegin(GL_POINTS);
@@ -75,6 +79,11 @@ public:
         glEnd();
     }
 
+    /// @brief Used to draw a line using opengl
+    /// @param xa abscissa of first point
+    /// @param ya ordinate of first point
+    /// @param xb abscissa of second point
+    /// @param yb ordinate of second point
     void line(int xa, int ya, int xb, int yb)
     {
         glBegin(GL_LINES);
@@ -88,6 +97,9 @@ public:
         glColor3f(color.red, color.green, color.blue);
     }
 
+    /// @brief plots a point using already set color
+    /// @param x abscissa
+    /// @param y ordinate
     void plotpt(int x, int y)
     {
         glBegin(GL_POINTS);
@@ -95,6 +107,8 @@ public:
         glEnd();
     }
 
+    /// @brief A drawing function that will be repeatedly run while window is not closing
+    /// @param drawingFunction drawing function 
     void Draw(std::function<void()> drawingFunction)
     {
 
