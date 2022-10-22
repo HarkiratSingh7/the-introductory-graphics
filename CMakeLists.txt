@@ -26,3 +26,7 @@ add_definitions(
 # DDA Algorithm Demonstration
 add_executable(DDADemo src/DDADemo/main.cpp)
 target_link_libraries(DDADemo ${REQUIRED_LIBS})
+
+# Mid Point Circle Demostration
+add_executable(MidPtCircleDemo src/MidPointCircleDemo/main.cpp)
+target_link_libraries(MidPtCircleDemo ${REQUIRED_LIBS})
