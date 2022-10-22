@@ -30,3 +30,7 @@ target_link_libraries(DDADemo ${REQUIRED_LIBS})
 # Mid Point Circle Demostration
 add_executable(MidPtCircleDemo src/MidPointCircleDemo/main.cpp)
 target_link_libraries(MidPtCircleDemo ${REQUIRED_LIBS})
+
+# Mid Point Ellipse Demonstration
+add_executable(MidPtEllipseDemo src/MidPointEllipseDemo/main.cpp)
+target_link_libraries(MidPtEllipseDemo ${REQUIRED_LIBS})
