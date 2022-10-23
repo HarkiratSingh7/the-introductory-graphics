@@ -92,6 +92,81 @@ public:
         glEnd();
     }
 
+    void circle(int cx, int cy, int r, ColorRGB color)
+    {
+        int x = 0;
+        int y = r;
+        int p = 1 - r;
+
+        setColor(color);
+        circle_point(x, y, cx, cy);
+
+        while (x < y)
+        {
+            x++;
+            if (p < 0)
+                p += 2 * x + 1;
+            else
+            {
+                y--;
+                p += 2 * (x - y) + 1;
+            }
+
+            circle_point(x, y, cx, cy);
+        }
+    }
+
+    void ellipse(int cx, int cy, int rx, int ry, ColorRGB color)
+    {
+        int rx2 = rx * rx;
+        int ry2 = ry * ry;
+        int _2rx2 = 2 * rx2;
+        int _2ry2 = 2 * ry2;
+        int x = 0;
+        int y = ry;
+
+        int p1 = ry2 + std::round(rx2 * 0.25) - (ry * rx2);
+
+        setColor(color);
+
+        ellipse_point(x, y, cx, cy);
+
+        int px = 0;
+        int py = _2rx2 * y;
+
+        while (px < py)
+        {
+            px += _2ry2;
+            ++x;
+            if (p1 < 0)
+                p1 += ry2 + px;
+            else
+            {
+                y--;
+                py -= _2rx2;
+                p1 += ry2 + px - py;
+            }
+            ellipse_point(x, y, cx, cy);
+        }
+
+        int p2 = (ry2 * std::round((x + 0.5) * (x + 0.5))) + (rx2 * (y - 1) * (y - 1)) - (ry2 * rx2);
+
+        while (y > 0)
+        {
+            y--;
+            py -= _2rx2;
+            if (p2 > 0)
+                p2 += rx2 - py;
+            else
+            {
+                x++;
+                px += _2ry2;
+                p2 += rx2 - py + px;
+            }
+            ellipse_point(x, y, cx, cy);
+        }
+    }
+
     void setColor(ColorRGB color)
     {
         glColor3f(color.red, color.green, color.blue);
@@ -108,7 +183,7 @@ public:
     }
 
     /// @brief A drawing function that will be repeatedly run while window is not closing
-    /// @param drawingFunction drawing function 
+    /// @param drawingFunction drawing function
     void Draw(std::function<void()> drawingFunction)
     {
 
@@ -125,6 +200,27 @@ public:
     {
         log << "GraphicsWindow: Exiting on out of scope" << ln;
         glfwTerminate(); // will delete window
+    }
+
+private:
+    void circle_point(int x, int y, int cx, int cy)
+    {
+        plotpt(cx + x, cy + y);
+        plotpt(cx - x, cy + y);
+        plotpt(cx + x, cy - y);
+        plotpt(cx - x, cy - y);
+        plotpt(cx + y, cy + x);
+        plotpt(cx - y, cy + x);
+        plotpt(cx + y, cy - x);
+        plotpt(cx - y, cy - x);
+    }
+
+    void ellipse_point(int x, int y, int cx, int cy)
+    {
+        plotpt(cx + x, cy + y);
+        plotpt(cx - x, cy + y);
+        plotpt(cx + x, cy - y);
+        plotpt(cx - x, cy - y);
     }
 
 private:
