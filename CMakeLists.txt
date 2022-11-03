@@ -34,3 +34,7 @@ target_link_libraries(MidPtCircleDemo ${REQUIRED_LIBS})
 # Mid Point Ellipse Demonstration
 add_executable(MidPtEllipseDemo src/MidPointEllipseDemo/main.cpp)
 target_link_libraries(MidPtEllipseDemo ${REQUIRED_LIBS})
+
+# Color Fill Demonstration
+add_executable(ColorFillDemo src/ColorFillDemo/main.cpp)
+target_link_libraries(ColorFillDemo ${REQUIRED_LIBS})
