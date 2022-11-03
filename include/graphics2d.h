@@ -17,16 +17,32 @@
 #include <string>
 #include <cmath>
 #include <functional>
+#include <bitset>
+#include <queue>
 
 const char ln = '\n';
 
 struct ColorRGB
 {
-    float red = 0.0f, blue = 0.0f, green = 0.0f;
+    GLbyte red = 0, green = 0, blue = 0;
     ColorRGB() {}
-    ColorRGB(float b_red, float b_green, float b_blue)
+    ColorRGB(int b_red, int b_green, int b_blue)
         : red(b_red), blue(b_blue), green(b_green)
     {
+    }
+
+    ColorRGB(float f_red, float f_green, float f_blue)
+    {
+        red = static_cast<GLbyte>(255 * f_red);
+        green = static_cast<GLbyte>(255 * f_green);
+        blue = static_cast<GLbyte>(255 * f_blue);
+    }
+
+    bool operator==(const ColorRGB& color)
+    {
+        if (color.blue == this->blue and color.green == this->green and color.red == this->red)
+            return true;
+        return false;
     }
 };
 
@@ -44,6 +60,14 @@ public:
         }
 
         window = glfwCreateWindow(window_width, window_height, window_title.c_str(), nullptr, nullptr);
+        pixels = new ColorRGB[window_height * window_width];
+
+        for (int i = 0; i < window_width; i++)
+        {
+            for (int j = 0; j < window_height; j++)
+                pixels[(j * window_width) + i] = ColorRGB(255, 255, 255);
+        }
+
         if (!window)
         {
             log << "Failed to create a window" << ln;
@@ -62,21 +86,19 @@ public:
 
         auto version_str = glGetString(GL_VERSION);
         log << "OpenGL Version " << version_str << ln;
-
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
         glOrtho(0, width - 1, height - 1, 0, 0, 1); // Origin at the top left
-    }
 
-    /// @brief plots a point
-    /// @param x abscissa
-    /// @param y ordinate
-    /// @param color color of the point
-    void plotpt(int x, int y, const ColorRGB &color)
-    {
-        glBegin(GL_POINTS);
-        glColor3f(color.red, color.green, color.blue);
-        glVertex2i(x, y);
-        glEnd();
+        glMatrixMode(GL_MODELVIEW);
+        glViewport(0, 0, window_width, window_height);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        glEnable(GL_TEXTURE_2D);
     }
 
     /// @brief Used to draw a line using opengl
@@ -167,9 +189,16 @@ public:
         }
     }
 
-    void setColor(ColorRGB color)
+    inline void setColor(ColorRGB color)
     {
-        glColor3f(color.red, color.green, color.blue);
+        selectedColor = color;
+    }
+
+    ColorRGB getColor(int x, int y)
+    {
+        if (x < 0 or x >= window_width or y < 0 or y >= window_height)
+            return ColorRGB();
+        return pixels[(y * window_width) + x];
     }
 
     /// @brief plots a point using already set color
@@ -177,9 +206,9 @@ public:
     /// @param y ordinate
     void plotpt(int x, int y)
     {
-        glBegin(GL_POINTS);
-        glVertex2i(x, y);
-        glEnd();
+        if (x < 0 or x >= window_width or y < 0 or y >= window_height)
+            return;
+        pixels[(y * window_width) + x] = selectedColor;
     }
 
     /// @brief A drawing function that will be repeatedly run while window is not closing
@@ -191,6 +220,17 @@ public:
         {
             glClear(GL_COLOR_BUFFER_BIT);
             drawingFunction();
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+            glBegin(GL_QUADS);
+            glTexCoord2d(0.0, 0.0);
+            glVertex2d(0.0, 0.0);
+            glTexCoord2d(1.0, 0.0);
+            glVertex2d(window_width, 0.0);
+            glTexCoord2d(1.0, 1.0);
+            glVertex2d(window_width, window_height);
+            glTexCoord2d(0.0, 1.0);
+            glVertex2d(0.0, window_height);
+            glEnd();
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
@@ -198,6 +238,7 @@ public:
 
     ~GraphicsWindow()
     {
+        glDeleteFramebuffers(1, &framebuffer);
         log << "GraphicsWindow: Exiting on out of scope" << ln;
         glfwTerminate(); // will delete window
     }
@@ -225,6 +266,11 @@ private:
 
 private:
     std::ostream &log;
+    unsigned int framebuffer;
+    unsigned int texture;
+    unsigned int renderbuffer;
+    ColorRGB *pixels;
+    ColorRGB selectedColor;
     GLFWwindow *window{nullptr};
     int window_width{0}, window_height{0};
     std::string window_title;
