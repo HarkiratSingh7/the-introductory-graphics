@@ -11,30 +11,29 @@ void flood_fill4(int x, int y, ColorRGB fillColor, ColorRGB oldColor, GraphicsWi
     
     using namespace std;
     const vector<pair<int, int>> directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-    bitset<width * height> bits(0);
     queue<pair<int, int>> q;
 
-    q.push({x, y});
-    bits[position(x, y)] = 1;
     window.setColor(fillColor);
+
+    q.push({x, y});
+    window.plotpt(x, y);
 
     while (!q.empty())
     {
         auto pos = q.front();
         q.pop();
-        window.plotpt(pos.first, pos.second);
 
         for (const auto &direction : directions)
         {
             auto nx = direction.first + pos.first;
             auto ny = direction.second + pos.second;
-            if (bits[position(nx, ny)])
-                continue;
+            if (nx < 0 or nx >= width or ny < 0 or ny >= height)
+                    continue;
             auto clr = window.getColor(nx, ny);
             if (clr == oldColor)
             {
                 q.push({nx, ny});
-                bits[position(nx, ny)] = 1;
+                window.plotpt(nx, ny);
             }
         }
     }
@@ -57,7 +56,7 @@ int main()
                     window.circle(200, 200, 100, black);
 
                     flood_fill4(450, 450, green, white, window);
-                    flood_fill4(250, 250, blue, white, window);
+                    window.flood_fill4(250, 250, blue, white);
                 });
 
     return 0;
