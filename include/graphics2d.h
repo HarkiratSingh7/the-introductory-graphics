@@ -17,7 +17,6 @@
 #include <string>
 #include <cmath>
 #include <functional>
-#include <bitset>
 #include <queue>
 
 const char ln = '\n';
@@ -38,7 +37,7 @@ struct ColorRGB
         blue = static_cast<GLbyte>(255 * f_blue);
     }
 
-    bool operator==(const ColorRGB& color)
+    bool operator==(const ColorRGB &color)
     {
         if (color.blue == this->blue and color.green == this->green and color.red == this->red)
             return true;
@@ -95,11 +94,69 @@ public:
         glViewport(0, 0, window_width, window_height);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glEnable(GL_TEXTURE_2D);
     }
+
+    inline void setColor(ColorRGB color)
+    {
+        selectedColor = color;
+    }
+
+    ColorRGB getColor(int x, int y)
+    {
+        if (x < 0 or x >= window_width or y < 0 or y >= window_height)
+            return ColorRGB();
+        return pixels[(y * window_width) + x];
+    }
+
+    /// @brief plots a point using already set color
+    /// @param x abscissa
+    /// @param y ordinate
+    void plotpt(int x, int y)
+    {
+        if (x < 0 or x >= window_width or y < 0 or y >= window_height)
+            return;
+        pixels[(y * window_width) + x] = selectedColor;
+    }
+
+    /// @brief A drawing function that will be repeatedly run while window is not closing
+    /// @param drawingFunction drawing function
+    void Draw(std::function<void()> drawingFunction)
+    {
+
+        while (!glfwWindowShouldClose(window))
+        {
+            glClear(GL_COLOR_BUFFER_BIT);
+            drawingFunction();
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+            glBegin(GL_QUADS);
+            glTexCoord2d(0.0, 0.0);
+            glVertex2d(0.0, 0.0);
+            glTexCoord2d(1.0, 0.0);
+            glVertex2d(window_width, 0.0);
+            glTexCoord2d(1.0, 1.0);
+            glVertex2d(window_width, window_height);
+            glTexCoord2d(0.0, 1.0);
+            glVertex2d(0.0, window_height);
+            glEnd();
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        }
+    }
+
+    ~GraphicsWindow()
+    {
+        delete[] pixels;
+        log << "GraphicsWindow: Exiting on out of scope" << ln;
+        glfwTerminate(); // will delete window
+    }
+
+    // Drawing functions
 
     /// @brief Used to draw a line using opengl
     /// @param xa abscissa of first point
@@ -189,58 +246,40 @@ public:
         }
     }
 
-    inline void setColor(ColorRGB color)
-    {
-        selectedColor = color;
-    }
+    const int getSize() { return window_height * window_width; }
 
-    ColorRGB getColor(int x, int y)
+    void flood_fill4(int x, int y, ColorRGB fillColor, ColorRGB oldColor)
     {
-        if (x < 0 or x >= window_width or y < 0 or y >= window_height)
-            return ColorRGB();
-        return pixels[(y * window_width) + x];
-    }
+        // Recursive version was causing crashes (segmentation fault) with large circles
 
-    /// @brief plots a point using already set color
-    /// @param x abscissa
-    /// @param y ordinate
-    void plotpt(int x, int y)
-    {
-        if (x < 0 or x >= window_width or y < 0 or y >= window_height)
-            return;
-        pixels[(y * window_width) + x] = selectedColor;
-    }
+        using namespace std;
+        const vector<pair<int, int>> directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
 
-    /// @brief A drawing function that will be repeatedly run while window is not closing
-    /// @param drawingFunction drawing function
-    void Draw(std::function<void()> drawingFunction)
-    {
+        queue<pair<int, int>> q;
 
-        while (!glfwWindowShouldClose(window))
+        setColor(fillColor);
+        q.push({x, y});
+        plotpt(x, y);
+
+        while (!q.empty())
         {
-            glClear(GL_COLOR_BUFFER_BIT);
-            drawingFunction();
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-            glBegin(GL_QUADS);
-            glTexCoord2d(0.0, 0.0);
-            glVertex2d(0.0, 0.0);
-            glTexCoord2d(1.0, 0.0);
-            glVertex2d(window_width, 0.0);
-            glTexCoord2d(1.0, 1.0);
-            glVertex2d(window_width, window_height);
-            glTexCoord2d(0.0, 1.0);
-            glVertex2d(0.0, window_height);
-            glEnd();
-            glfwSwapBuffers(window);
-            glfwPollEvents();
-        }
-    }
+            auto pos = q.front();
+            q.pop();
 
-    ~GraphicsWindow()
-    {
-        glDeleteFramebuffers(1, &framebuffer);
-        log << "GraphicsWindow: Exiting on out of scope" << ln;
-        glfwTerminate(); // will delete window
+            for (const auto &direction : directions)
+            {
+                auto nx = direction.first + pos.first;
+                auto ny = direction.second + pos.second;
+                if (nx < 0 or nx >= window_width or ny < 0 or ny >= window_height)
+                    continue;
+                auto clr = getColor(nx, ny);
+                if (clr == oldColor)
+                {
+                    q.push({nx, ny});
+                    plotpt(nx, ny);
+                }
+            }
+        }
     }
 
 private:
@@ -266,9 +305,6 @@ private:
 
 private:
     std::ostream &log;
-    unsigned int framebuffer;
-    unsigned int texture;
-    unsigned int renderbuffer;
     ColorRGB *pixels;
     ColorRGB selectedColor;
     GLFWwindow *window{nullptr};
