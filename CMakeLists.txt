@@ -38,3 +38,7 @@ target_link_libraries(MidPtEllipseDemo ${REQUIRED_LIBS})
 # Color Fill Demonstration
 add_executable(ColorFillDemo src/ColorFillDemo/main.cpp)
 target_link_libraries(ColorFillDemo ${REQUIRED_LIBS})
+
+# Transformation Demonstration
+add_executable(TransformationsDemo src/TransformationsDemo/main.cpp)
+target_link_libraries(TransformationsDemo ${REQUIRED_LIBS})
