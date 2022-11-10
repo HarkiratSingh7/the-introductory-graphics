@@ -10,24 +10,24 @@ const int HEIGHT = 600;
 /// @param y2 ordinate of second point
 /// @param color color
 /// @param window the window instance to which method should apply
-void lineDDA(int x1, int y1, int x2, int y2, ColorRGB color, GraphicsWindow& window)
+void lineDDA(int x1, int y1, int x2, int y2, ColorRGB color, GraphicsWindow &window)
 {
     int dx = x2 - x1;
     int dy = y2 - y1;
-    
+
     int steps = std::max(abs(dx), abs(dy));
 
-    int x = x1, y = y1;
+    float x = x1, y = y1;
     float xi = dx / static_cast<float>(steps);
     float yi = dy / static_cast<float>(steps);
-
     window.setColor(color);
+
     window.plotpt(x, y);
     for (int k = 0; k < steps; k++)
     {
         x += xi;
         y += yi;
-        window.plotpt(x, y);
+        window.plotpt(ROUND(x), ROUND(y));
     }
 }
 
@@ -35,7 +35,8 @@ int main()
 {
     GraphicsWindow window(WIDTH, HEIGHT, "DDA Demo");
 
-    window.Draw([&]{
+    window.Draw([&]
+                {
         auto green = ColorRGB(0.0f, 1.0f, 0.0f);
         auto blue = ColorRGB(0.0f, 0.0f, 1.0f);
         auto red = ColorRGB(1.0f, 0.0f, 0.0f);
@@ -46,8 +47,7 @@ int main()
 
         auto black = ColorRGB();
         window.setColor(black);
-        window.line(WIDTH - 1, 0, 0, HEIGHT - 1); // diagonal
-    });
+        window.lineDDA(WIDTH - 1, 0, 0, HEIGHT - 1); });
 
     return 0;
 }
