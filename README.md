@@ -1,4 +1,3 @@
-<link href="mark.css" type="text/css" rel="stylesheet"/>
 # the-introductory-graphics
 The aim of this project is to study and implement basic drawing algorithms as a part of my studies.
 
@@ -6,31 +5,31 @@ Currently the following algorithms and their demonstrations are implemented.
 
 ### 1. Digital Differential Analyzer Line Drawing Algorithm
 
-![Screenshot](./src/DDADemo/Screenshots/s1.png)
+<img src="./src/DDADemo/Screenshots/s1.png" width="500" />
 
 Code: [Source File](./src/DDADemo/main.cpp)
 
 ### 2. Mid Point Circle Drawing Algorithm
 
-![Screenshot](./src/MidPointCircleDemo/Screenshots/s1.png)
+<img src="./src/MidPointCircleDemo/Screenshots/s1.png" width="500" />
 
 Code: [Source File](./src/MidPointCircleDemo/main.cpp)
 
 ### 3. Mid Point Ellipse Drawing Algorithm
 
-![Screenshot](./src/MidPointEllipseDemo/Screenshots/s1.png)
+<img src="./src/MidPointEllipseDemo/Screenshots/s1.png" width="500" />
 
 Code: [Source File](./src/MidPointEllipseDemo/main.cpp)
 
 ### 4. Flood Fill Demonstration
 
-![Screenshot](./src/ColorFillDemo/Screenshots/s1.png)
+<img src="./src/ColorFillDemo/Screenshots/s1.png" width="500" />
 
 Code: [Source File](./src/ColorFillDemo/main.cpp)
 
 ### 5. Transformation Demonstration
 
-![Screenshot](./src/TransformationsDemo/Screenshots/s1.png)
+<img src="./src/TransformationsDemo/Screenshots/s1.png" width="500" />
 
 Code: [Source File](./src/TransformationsDemo/main.cpp)
 
