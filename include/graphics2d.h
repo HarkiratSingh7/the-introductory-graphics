@@ -54,7 +54,9 @@ public:
     {
         if (!glfwInit())
         {
+#ifdef GRAPHICS_VERBOSE
             log << "An error occurred while initializing GLFW" << ln;
+#endif
             return;
         }
 
@@ -69,7 +71,9 @@ public:
 
         if (!window)
         {
+#ifdef GRAPHICS_VERBOSE
             log << "Failed to create a window" << ln;
+#endif
             glfwTerminate();
             return;
         }
@@ -78,13 +82,17 @@ public:
 
         if (glewInit() != GLEW_OK)
         {
+#ifdef GRAPHICS_VERBOSE
             log << "Failed to initialize GLEW" << ln;
+#endif
             glfwTerminate();
             return;
         }
 
         auto version_str = glGetString(GL_VERSION);
+#ifdef GRAPHICS_VERBOSE
         log << "OpenGL Version " << version_str << ln;
+#endif
         glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -152,7 +160,9 @@ public:
     ~GraphicsWindow()
     {
         delete[] pixels;
+#ifdef GRAPHICS_VERBOSE
         log << "GraphicsWindow: Exiting on out of scope" << ln;
+#endif
         glfwTerminate(); // will delete window
     }
 
