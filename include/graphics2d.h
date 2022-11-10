@@ -136,6 +136,8 @@ public:
         pixels[(y * window_width) + x] = selectedColor;
     }
 
+    /// @brief A drawing function that will run only once and then nothing will be drawn to screen. (It will persist).
+    /// @param drawingfunction drawing function
     void Run(std::function<void()> drawingfunction)
     {
         drawingfunction();
