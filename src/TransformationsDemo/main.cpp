@@ -9,31 +9,38 @@ int main()
     ColorRGB blue(0, 0, 255);
     ColorRGB green(0, 255, 0);
 
-    std::vector<std::pair<int, int>> points = {{100, 200}, {400, 200}, {250, 500}};
+    std::vector<Point2D> points = {{100, 200}, {400, 200}, {250, 500}};
     int refX = 250;
     int refY = 500;
 
-    auto draw = [&]()
-    {
-        window.lineDDA(points[0].first, points[0].second, points[1].first, points[1].second);
-        window.lineDDA(points[1].first, points[1].second, points[2].first, points[2].second);
-        window.lineDDA(points[2].first, points[2].second, points[0].first, points[0].second);
-    };
+    Figure2DSimple triangle(points, false);
+    
+    window.setColor(green);
+    window.drawFigureSimple(triangle);
 
-    window.Run([&]
-               {
-                   window.setColor(green);
-                   draw();
+    window.clearTransformations();
+    window.addScaling2D(0.5f, 0.5f, refX, refY);
+    window.addRotation2D(-45.0f, refX, refY);
+    window.addTranslation2D(50, -50);
+    window.applyTransformations(points);
 
-                   window.clearTransformations();
-                   window.addScaling2D(0.5f, 0.5f, refX, refY);
-                   window.addRotation2D(-45.0f, refX, refY);
-                   window.addTranslation2D(50, -50);
-                   window.applyTransformations(points);
+    window.setColor(blue);
+    Figure2DSimple transformedTriangle(points, false);
+    window.drawFigureSimple(transformedTriangle);
 
-                   window.setColor(blue);
-                   draw(); 
-                });
+    std::vector<Point2D> polygon_pts = {{520, 50}, {630, 150}, {700, 270}, {450, 320}};
+    Figure2DSimple polygon(polygon_pts, false);
+    window.setColor(green);
+    window.drawFigureSimple(polygon);
+
+    window.clearTransformations();
+    window.addRotation2D(90, 450, 320);
+    window.applyTransformations(polygon_pts);
+    Figure2DSimple transformedPolygon(polygon_pts, false);
+    window.setColor(blue);
+    window.drawFigureSimple(transformedPolygon);
+
+    window.ShowOnce();
 
     return 0;
 }
