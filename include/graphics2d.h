@@ -49,6 +49,52 @@ struct ColorRGB
     }
 };
 
+struct Point2D
+{
+    int x = 0;
+    int y = 0;
+    ColorRGB value;
+};
+
+struct Figure2DSimple
+{
+    Figure2DSimple(bool isOpen = false)
+        : open(isOpen) {}
+
+    /// @brief Creates a figure by connecting all points in order
+    /// @param points The points to be connected one by one.
+    /// @param isOpen The last point should be connected to first or not.
+    Figure2DSimple(std::vector<Point2D> &points, bool isOpen)
+    {
+        this->points = points;
+        this->open = isOpen;
+    }
+
+    void addPoint(Point2D pt)
+    {
+        points.push_back(pt);
+    }
+
+private:
+    std::vector<Point2D> points;
+    bool open = false;
+    friend class GraphicsWindow;
+};
+
+struct Figure2DGraph
+{
+    void add_link(Point2D first, Point2D second)
+    {
+        Figure2DSimple line(true);
+        line.addPoint(first);
+        line.addPoint(second);
+    }
+
+private:
+    std::vector<Figure2DSimple> lines;
+    friend class GraphicsWindow;
+};
+
 class GraphicsWindow
 {
 public:
@@ -112,6 +158,8 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glEnable(GL_TEXTURE_2D);
+
+        clearTransformations();
     }
 
     inline void setColor(ColorRGB color)
@@ -129,8 +177,10 @@ public:
     /// @brief plots a point using already set color
     /// @param x abscissa
     /// @param y ordinate
-    void plotpt(int x, int y)
+    void plotpt(int x, int y, std::vector<Point2D> *pts = nullptr)
     {
+        if (pts)
+            pts->push_back({x, y, selectedColor});
         if (x < 0 or x >= window_width or y < 0 or y >= window_height)
             return;
         pixels[(y * window_width) + x] = selectedColor;
@@ -138,9 +188,10 @@ public:
 
     /// @brief A drawing function that will run only once and then nothing will be drawn to screen. (It will persist).
     /// @param drawingfunction drawing function
-    void Run(std::function<void()> drawingfunction)
+    void ShowOnce(std::function<void()> drawingfunction = nullptr)
     {
-        drawingfunction();
+        if (drawingfunction)
+            drawingfunction();
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
         while (!glfwWindowShouldClose(window))
@@ -202,7 +253,7 @@ public:
     /// @param y1 ordinate of first point
     /// @param x2 abscissa of second point
     /// @param y2 ordinate of second point
-    void lineDDA(int x1, int y1, int x2, int y2)
+    void lineDDA(int x1, int y1, int x2, int y2, std::vector<Point2D> *pts = nullptr)
     {
         int dx = x2 - x1;
         int dy = y2 - y1;
@@ -213,7 +264,7 @@ public:
         float xi = dx / static_cast<float>(steps);
         float yi = dy / static_cast<float>(steps);
 
-        plotpt(x, y);
+        plotpt(x, y, pts);
         for (int k = 0; k < steps; k++)
         {
             x += xi;
@@ -222,14 +273,29 @@ public:
         }
     }
 
-    void circle(int cx, int cy, int r, ColorRGB color)
+    void drawFigureGraph(const Figure2DGraph &figure)
+    {
+        for (const auto &line : figure.lines)
+            lineDDA(line.points.front().x, line.points.front().y, line.points.back().x, line.points.back().y);
+    }
+
+    void drawFigureSimple(const Figure2DSimple &figure)
+    {
+        for (int i = 0; i < figure.points.size() - 1; i++)
+            lineDDA(figure.points[i].x, figure.points[i].y, figure.points[i + 1].x, figure.points[i + 1].y);
+
+        if (!figure.open)
+            lineDDA(figure.points.back().x, figure.points.back().y, figure.points.front().x, figure.points.front().y);
+    }
+
+    void circle(int cx, int cy, int r, ColorRGB color, std::vector<Point2D> *pts = nullptr)
     {
         int x = 0;
         int y = r;
         int p = 1 - r;
 
         setColor(color);
-        circle_point(x, y, cx, cy);
+        circle_point(x, y, cx, cy, pts);
 
         while (x < y)
         {
@@ -242,11 +308,11 @@ public:
                 p += 2 * (x - y) + 1;
             }
 
-            circle_point(x, y, cx, cy);
+            circle_point(x, y, cx, cy, pts);
         }
     }
 
-    void ellipse(int cx, int cy, int rx, int ry, ColorRGB color)
+    void ellipse(int cx, int cy, int rx, int ry, ColorRGB color, std::vector<Point2D> *pts = nullptr)
     {
         int rx2 = rx * rx;
         int ry2 = ry * ry;
@@ -259,7 +325,7 @@ public:
 
         setColor(color);
 
-        ellipse_point(x, y, cx, cy);
+        ellipse_point(x, y, cx, cy, pts);
 
         int px = 0;
         int py = _2rx2 * y;
@@ -276,7 +342,7 @@ public:
                 py -= _2rx2;
                 p1 += ry2 + px - py;
             }
-            ellipse_point(x, y, cx, cy);
+            ellipse_point(x, y, cx, cy, pts);
         }
 
         int p2 = (ry2 * std::round((x + 0.5) * (x + 0.5))) + (rx2 * (y - 1) * (y - 1)) - (ry2 * rx2);
@@ -293,7 +359,7 @@ public:
                 px += _2ry2;
                 p2 += rx2 - py + px;
             }
-            ellipse_point(x, y, cx, cy);
+            ellipse_point(x, y, cx, cy, pts);
         }
     }
 
@@ -336,13 +402,13 @@ public:
     /// @brief Apply all added transformations
     /// @param points vector containing all points (pair object having first as abscissa, second as ordinate)
     /// @param clear whether to clear added transformations or not
-    void applyTransformations(std::vector<std::pair<int, int>> &points, bool clear = true)
+    void applyTransformations(std::vector<Point2D> &points, bool clear = true)
     {
         for (auto &point : points)
         {
-            float temp = transformations[0][0] * point.first + transformations[0][1] * point.second + transformations[0][2];
-            point.second = transformations[1][0] * point.first + transformations[1][1] * point.second + transformations[1][2];
-            point.first = temp;
+            float temp = transformations[0][0] * point.x + transformations[0][1] * point.y + transformations[0][2];
+            point.y = transformations[1][0] * point.x + transformations[1][1] * point.y + transformations[1][2];
+            point.x = temp;
         }
 
         if (clear)
@@ -430,24 +496,24 @@ private:
                 result[r][c] = tmp[r][c];
     }
 
-    void circle_point(int x, int y, int cx, int cy)
+    void circle_point(int x, int y, int cx, int cy, std::vector<Point2D> *pts = nullptr)
     {
-        plotpt(cx + x, cy + y);
-        plotpt(cx - x, cy + y);
-        plotpt(cx + x, cy - y);
-        plotpt(cx - x, cy - y);
-        plotpt(cx + y, cy + x);
-        plotpt(cx - y, cy + x);
-        plotpt(cx + y, cy - x);
-        plotpt(cx - y, cy - x);
+        plotpt(cx + x, cy + y, pts);
+        plotpt(cx - x, cy + y, pts);
+        plotpt(cx + x, cy - y, pts);
+        plotpt(cx - x, cy - y, pts);
+        plotpt(cx + y, cy + x, pts);
+        plotpt(cx - y, cy + x, pts);
+        plotpt(cx + y, cy - x, pts);
+        plotpt(cx - y, cy - x, pts);
     }
 
-    void ellipse_point(int x, int y, int cx, int cy)
+    void ellipse_point(int x, int y, int cx, int cy, std::vector<Point2D> *pts = nullptr)
     {
-        plotpt(cx + x, cy + y);
-        plotpt(cx - x, cy + y);
-        plotpt(cx + x, cy - y);
-        plotpt(cx - x, cy - y);
+        plotpt(cx + x, cy + y, pts);
+        plotpt(cx - x, cy + y, pts);
+        plotpt(cx + x, cy - y, pts);
+        plotpt(cx - x, cy - y, pts);
     }
 
 private:
