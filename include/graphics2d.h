@@ -196,16 +196,28 @@ public:
     // Drawing functions
 
     /// @brief Used to draw a line using opengl
-    /// @param xa abscissa of first point
-    /// @param ya ordinate of first point
-    /// @param xb abscissa of second point
-    /// @param yb ordinate of second point
-    void line(int xa, int ya, int xb, int yb)
+    /// @param x1 abscissa of first point
+    /// @param y1 ordinate of first point
+    /// @param x2 abscissa of second point
+    /// @param y2 ordinate of second point
+    void lineDDA(int x1, int y1, int x2, int y2)
     {
-        glBegin(GL_LINES);
-        glVertex2i(xa, ya);
-        glVertex2i(xb, yb);
-        glEnd();
+        int dx = x2 - x1;
+        int dy = y2 - y1;
+
+        int steps = std::max(abs(dx), abs(dy));
+
+        float x = x1, y = y1;
+        float xi = dx / static_cast<float>(steps);
+        float yi = dy / static_cast<float>(steps);
+
+        plotpt(x, y);
+        for (int k = 0; k < steps; k++)
+        {
+            x += xi;
+            y += yi;
+            plotpt(ROUND(x), ROUND(y));
+        }
     }
 
     void circle(int cx, int cy, int r, ColorRGB color)
