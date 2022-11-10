@@ -14,12 +14,16 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <vector>
 #include <string>
 #include <cmath>
 #include <functional>
 #include <queue>
 
 const char ln = '\n';
+
+typedef float Matrix3x3[3][3];
+#define ROUND(a) (static_cast<int>(a + 0.5))
 
 struct ColorRGB
 {
@@ -130,6 +134,29 @@ public:
         if (x < 0 or x >= window_width or y < 0 or y >= window_height)
             return;
         pixels[(y * window_width) + x] = selectedColor;
+    }
+
+    void Run(std::function<void()> drawingfunction)
+    {
+        drawingfunction();
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+        while (!glfwWindowShouldClose(window))
+        {
+            glClear(GL_COLOR_BUFFER_BIT);
+            glBegin(GL_QUADS);
+            glTexCoord2d(0.0, 0.0);
+            glVertex2d(0.0, 0.0);
+            glTexCoord2d(1.0, 0.0);
+            glVertex2d(window_width, 0.0);
+            glTexCoord2d(1.0, 1.0);
+            glVertex2d(window_width, window_height);
+            glTexCoord2d(0.0, 1.0);
+            glVertex2d(0.0, window_height);
+            glEnd();
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        }
     }
 
     /// @brief A drawing function that will be repeatedly run while window is not closing
@@ -292,7 +319,103 @@ public:
         }
     }
 
+    /// @brief Apply all added transformations
+    /// @param points vector containing all points (pair object having first as abscissa, second as ordinate)
+    /// @param clear whether to clear added transformations or not
+    void applyTransformations(std::vector<std::pair<int, int>> &points, bool clear = true)
+    {
+        for (auto &point : points)
+        {
+            float temp = transformations[0][0] * point.first + transformations[0][1] * point.second + transformations[0][2];
+            point.second = transformations[1][0] * point.first + transformations[1][1] * point.second + transformations[1][2];
+            point.first = temp;
+        }
+
+        if (clear)
+            clearTransformations();
+    }
+
+    /// @brief Clears added transformations
+    void clearTransformations()
+    {
+        setIdentity3x3(transformations);
+    }
+
+    /// @brief Add a translation operation in order
+    /// @param tx translation distance along x axis
+    /// @param ty translation distance along y axis
+    void addTranslation2D(int tx, int ty)
+    {
+        Matrix3x3 translations;
+        setIdentity3x3(translations);
+        translations[0][2] = tx;
+        translations[1][2] = ty;
+        matrix3x3Multiply(translations, transformations);
+    }
+
+    /// @brief Add a scaling operation in order
+    /// @param sx scaling factor along x axis
+    /// @param sy scaling factor along y axis
+    /// @param fX fixed point Abscissa
+    /// @param fY fixed point ordinate
+    void addScaling2D(float sx, float sy, int fX, int fY)
+    {
+        Matrix3x3 scaling;
+        setIdentity3x3(scaling);
+        scaling[0][0] = sx;
+        scaling[1][1] = sy;
+        scaling[0][2] = (1 - sx) * fX;
+        scaling[1][2] = (1 - sy) * fY;
+        matrix3x3Multiply(scaling, transformations);
+    }
+
+    /// @brief Rotate a point counter clockwise
+    /// @param angle Angle in degrees. Positive value for counter clockwise rotation, negative value for clockwise rotation.
+    /// @param pX Pivot point abscissa
+    /// @param pY Pivot point ordinate
+    void addRotation2D(float angle, int pX, int pY)
+    {
+        angle = degToRad(angle);
+        Matrix3x3 rotations;
+        setIdentity3x3(rotations);
+
+        rotations[0][0] = cosf(angle);
+        rotations[0][1] = -sinf(angle);
+        rotations[1][0] = sinf(angle);
+        rotations[1][1] = cosf(angle);
+
+        rotations[0][2] = pX * (1 - cosf(angle)) + pY * sinf(angle);
+        rotations[1][2] = pY * (1 - cosf(angle)) - pX * sinf(angle);
+
+        matrix3x3Multiply(rotations, transformations);
+    }
+
 private:
+    inline float degToRad(float degrees)
+    {
+        return degrees * M_PI / 180.0f;
+    }
+
+    inline void setIdentity3x3(Matrix3x3 mat)
+    {
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                mat[i][j] = (i == j);
+    }
+
+    void matrix3x3Multiply(Matrix3x3 a, Matrix3x3 result)
+    {
+        Matrix3x3 tmp;
+
+        for (int r = 0; r < 3; r++)
+            for (int c = 0; c < 3; c++)
+                tmp[r][c] = a[r][0] * result[0][c] + a[r][1] * result[1][c] + a[r][2] * result[2][c];
+
+        for (int r = 0; r < 3; r++)
+            for (int c = 0; c < 3; c++)
+                result[r][c] = tmp[r][c];
+    }
+
     void circle_point(int x, int y, int cx, int cy)
     {
         plotpt(cx + x, cy + y);
@@ -314,6 +437,7 @@ private:
     }
 
 private:
+    Matrix3x3 transformations;
     std::ostream &log;
     ColorRGB *pixels;
     ColorRGB selectedColor;
